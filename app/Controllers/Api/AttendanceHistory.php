@@ -17,17 +17,28 @@ class AttendanceHistory extends BaseApiController
     public function index()
     {
         $employeeModel = new EmployeeModel();
-
-        $employees = $employeeModel
-            ->select('employee.employee_id, employee.name, employee.departement_id, departement.departement_name')
-            ->join('departement', 'departement.id = employee.departement_id', 'left')
-            ->orderBy('employee.name', 'ASC')
-            ->findAll();
-
+    
+        $departementId = $this->request->getGet('departement_id');
+        $date = $this->request->getGet('date');
+    
+        $builder = $employeeModel
+            ->select('employee.employee_id, employee.name, employee.departement_id, employee.created_at, departement.departement_name')
+            ->join('departement', 'departement.id = employee.departement_id', 'left');
+    
+        if (!empty($departementId)) {
+            $builder->where('employee.departement_id', $departementId);
+        }
+    
+        if (!empty($date)) {
+            $builder->where('DATE(employee.created_at)', $date);
+        }
+    
+        $employees = $builder->orderBy('employee.name', 'ASC')->findAll();
+    
         return $this->respond([
             'employees' => $employees,
         ]);
-    }
+    }    
 
     public function show($employeeId = null)
     {
